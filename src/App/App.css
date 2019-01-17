@@ -1,5 +1,23 @@
-.App {
+h1, h2 {
   text-align: center;
+}
+
+.center {
+  text-align: center;
+}
+
+hr.thick {
+  border: none;
+  height: 3px;
+  color: black;
+  background-color: black;
+}
+
+hr.lessThick {
+  border: none;
+  height: 2px;
+  color: black;
+  background-color: black;
 }
 
 .App-logo {
