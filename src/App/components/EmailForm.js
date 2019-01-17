@@ -22,6 +22,8 @@ class EmailForm extends Component {
 		this.handleGreetColor = this.handleGreetColor.bind(this);
 		this.handleSectionColor = this.handleSectionColor.bind(this);
 		this.handleQuickColor = this.handleQuickColor.bind(this);
+		this.bulletinHandle = this.bulletinHandle.bind(this);
+		this.bulletinChange = this.bulletinChange.bind(this);
 
 		this.defaultState = this.state = {
 			display: "form",
@@ -37,7 +39,8 @@ class EmailForm extends Component {
 					items: [
 						{
 							title: "",
-							body: ""
+							body: "",
+							bulletin_exclusive: false
 						}
 					]
 				},
@@ -49,7 +52,8 @@ class EmailForm extends Component {
 					items: [
 						{
 							title: "Totus Tuesday",
-							body: "Join us for adoration at St. Paul's this <span>Tuesday at 8</span> followed by a social in the CSA Lounge at <span>9</span>."
+							body: "Join us for adoration at St. Paul's this <span>Tuesday at 8</span> followed by a social in the CSA Lounge at <span>9</span>.",
+							bulletin_exclusive: false
 						}
 					]
 				},
@@ -205,8 +209,78 @@ class EmailForm extends Component {
 							...this.state.sections[index],
 							items: [...this.state.sections[index].items, {
 								title: "",
-								body: ""
+								body: "",
+								bulletin_exclusive: false
 							}]
+						}
+					}
+					return section;
+				})
+		})
+	}
+
+	bulletinHandle = location => e => {
+		e.preventDefault();
+		if (e.target.value === "add") {
+			this.setState({
+				...this.state,
+				sections: 
+					this.state.sections.map((section, index) => {
+						if (section.title.toLowerCase() === location) {
+							return {
+								...section,
+								items: [...section.items, {
+									title: "",
+									body: "",
+									bulletin_exclusive: true
+								}]
+							}
+						}
+						return section;
+					})
+			})
+		} else if (e.target.value === "remove") {
+			if (this.state.sections.filter(
+					section => section.title.toLowerCase() === location
+				)[0].items.filter(
+					item => item.bulletin_exclusive
+				).length > 0) {
+					this.setState({
+						...this.state,
+						sections: 
+							this.state.sections.map((section, index) => {
+								if (section.title.toLowerCase() === location) {
+									return {
+										...section,
+										items: section.items.slice(0, -1)
+									}
+								}
+								return section;
+							})
+					})
+			}
+		}
+	}
+
+	bulletinChange = (location, ii) => e => {
+		e.preventDefault();
+		this.setState({
+			...this.state,
+			sections: 
+				this.state.sections.map((section) => {
+					if (section.title.toLowerCase() === location.toLowerCase()) {
+						return {
+							...section,
+							items: 
+								section.items.map((item, index) => {
+									if (index === ii) {
+										return {
+											...item,
+											[e.target.name]: e.target.value
+										}
+									}
+									return item
+								})
 						}
 					}
 					return section;
@@ -357,7 +431,7 @@ class EmailForm extends Component {
 
 	render() {
 		switch (this.state.display) {
-			case "form":
+			case this.FORM:
 				return (
 					<div className="container">
 						<form>
@@ -404,19 +478,21 @@ class EmailForm extends Component {
 										<div className="form-group">
 											<label>Items:</label>
 											{this.state.sections[outerIndex].items.map((subSection, innerIndex) => {
-												return (
-													<React.Fragment key={innerIndex}>
-														<div className="form-group">
-															<label>Title:</label>
-															<input className="form-control" type="text" name="title" onChange={this.handleSubsectionChange(outerIndex, innerIndex)} value={this.state.sections[outerIndex].items[innerIndex].title} />
-														</div>
-														<div className="form-group">
-															<label>Body:</label>
-															<textarea className="form-control" name="body" onChange={this.handleSubsectionChange(outerIndex, innerIndex)} value={this.state.sections[outerIndex].items[innerIndex].body} />
-														</div>
-														<br/>
-													</React.Fragment>
-												)
+												if (!subSection.bulletin_exclusive) {
+													return (
+														<React.Fragment key={innerIndex}>
+															<div className="form-group">
+																<label>Title:</label>
+																<input className="form-control" type="text" name="title" onChange={this.handleSubsectionChange(outerIndex, innerIndex)} value={this.state.sections[outerIndex].items[innerIndex].title} />
+															</div>
+															<div className="form-group">
+																<label>Body:</label>
+																<textarea className="form-control" name="body" onChange={this.handleSubsectionChange(outerIndex, innerIndex)} value={this.state.sections[outerIndex].items[innerIndex].body} />
+															</div>
+															<br/>
+														</React.Fragment>
+													)
+												}
 											})}
 										</div>
 										<button className="btn btn-success" name="addItem" onClick={this.addItem(outerIndex)}>Add Item</button>
@@ -477,7 +553,7 @@ class EmailForm extends Component {
 						</form>
 					</div>
 				) 
-			case "email":
+			case this.EMAIL:
 				return (
 					<React.Fragment>
 						<div className="theHTML">
@@ -499,15 +575,17 @@ class EmailForm extends Component {
 											src={section.image_url} 
 											style={this.centerImage({width: section.image_size})}/>
 										{section.items.map(item => {
-											return (
-												<React.Fragment>
-													<p style={this.setFont()}>
-														<span dangerouslySetInnerHTML={{__html: `${item.title}:`}} style={this.setFont({bold: true, color: section.color})}></span>
-														&nbsp;&nbsp;
-														<span dangerouslySetInnerHTML={{__html: item.body}}></span>
-													</p>
-												</React.Fragment>
-										)
+											if (! item.bulletin_exclusive) {
+												return (
+													<React.Fragment>
+														<p style={this.setFont()}>
+															<span dangerouslySetInnerHTML={{__html: `${item.title}:`}} style={this.setFont({bold: true, color: section.color})}></span>
+															&nbsp;&nbsp;
+															<span dangerouslySetInnerHTML={{__html: item.body}}></span>
+														</p>
+													</React.Fragment>
+												)
+											}
 										})}
 									</React.Fragment>
 								)
@@ -520,6 +598,7 @@ class EmailForm extends Component {
 								return (
 									<p style={this.setFont()}>
 										<span style={this.setFont({bold: true, color: this.state.quick_links.color})} dangerouslySetInnerHTML={{__html: `${item.title}:`}}></span>
+										&nbsp;&nbsp;
 										<a href={item.link}>{item.link}</a>
 									</p>
 								)
@@ -531,7 +610,7 @@ class EmailForm extends Component {
 						<br/>
 					</React.Fragment>
 				)
-			case "bulletin":
+			case this.BULLETIN:
 				const bulletinSet = new Set(["announcements", "upcoming events"])
 				return (
 					<React.Fragment>
@@ -559,13 +638,54 @@ class EmailForm extends Component {
 						})}
 						<br/>
 						<br/>
+						<div className="container">
+							<form>
+								{
+								[...bulletinSet].map(element => {
+									const section = this.state.sections.filter(section => section.title.toLowerCase() === element)[0]
+									if (section) {
+										return (
+											<React.Fragment>
+												<h3>{section.title}</h3>
+												<br/>
+												{
+												section.items.map((item, i) => {
+													if (item.bulletin_exclusive) {
+														return (
+															<React.Fragment>
+																<div className="form-group">
+																	<label>Title</label>
+																	<input className="form-control" name="title" onChange={this.bulletinChange(section.title, i)} value={item.title}/>
+																</div>
+																<div className="form-group">
+																	<label>Body</label>
+																	<input className="form-control" name="body" onChange={this.bulletinChange(section.title, i)} value={item.body}/>
+																</div>
+															</React.Fragment>
+														)
+													}
+												})}
+												<button className="btn btn-success" value="add" onClick={this.bulletinHandle(element)}>Add {element}</button>
+												<button className="btn btn-danger" value="remove" onClick={this.bulletinHandle(element)}>Remove {element}</button>
+												<br/>
+												<br/>
+												<br/>
+												<br/>
+											</React.Fragment>
+										)
+									}
+								})}
+							</form>
+						</div>
+						<br/>
+						<br/>
 						<br/>
 						<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
 					</React.Fragment>
 				)
 			default:
 				return (
-					<h2>no</h2>
+					<h2>Something went wrong...</h2>
 				)
 		}
 	}
