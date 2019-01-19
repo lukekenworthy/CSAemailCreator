@@ -5,6 +5,7 @@ class EmailForm extends Component {
 	constructor(props) {
 		super(props);
 
+		// Bind functions
 		this.handleSectionChange = this.handleSectionChange.bind(this);
 		this.addSection = this.addSection.bind(this);
 		this.removeSection = this.removeSection.bind(this);
@@ -26,6 +27,14 @@ class EmailForm extends Component {
 		this.bulletinChange = this.bulletinChange.bind(this);
 		this.handleImport = this.handleImport.bind(this);
 
+		// Views for the form
+		this.FORM = "form"
+		this.EMAIL = "email"
+		this.BULLETIN = "bulletin"
+		this.JSON_EXPORT = "JSON_export"
+		this.JSON_IMPORT = "JSON_import"
+
+		// Set default state
 		this.defaultState = this.state = {
 			display: "form",
 			bold_greeting: "Happy Monday, CSA!",
@@ -102,6 +111,7 @@ class EmailForm extends Component {
 		}
 	}
 
+	// Used for styling images
 	centerImage({width = 200} = {}) {
 		return {
 			display: "block",
@@ -111,21 +121,17 @@ class EmailForm extends Component {
 		}
 	}
 
-	FORM = "form"
-	EMAIL = "email"
-	BULLETIN = "bulletin"
-	JSON_EXPORT = "JSON_export"
-	JSON_IMPORT = "JSON_import"
-
+	// Used for styling text
 	setFont({bold = false, big = false, centered = false, color = "#000000"} = {}) {
 		return {
 			fontWeight: bold ? 650 : 400,
 			fontSize: big ? "20pt" : "11pt",
-			color: `${color}`,
+			color: color,
 			textAlign: centered ? "center" : "left"
 		}
 	}
 
+	// Handles color for quick_links section
 	handleQuickColor(c, e) {
 		this.setState({
 			...this.state,
@@ -136,6 +142,7 @@ class EmailForm extends Component {
 		})
 	}
 
+	// Handles top-level color for greeting
 	handleGreetColor(c, e) {
 		this.setState({
 			...this.state,
@@ -143,6 +150,7 @@ class EmailForm extends Component {
 		})
 	}
 
+	// Used to update any change in the quick_links part of state
 	handleQuickLinkChange(e) {
 		e.preventDefault();
 		this.setState({
@@ -154,21 +162,26 @@ class EmailForm extends Component {
 		});
 	}
 
+	// Imports new state
 	handleImport(e) {
 		e.preventDefault();
-		let newState = JSON.parse(this.state.import)
-		this.setState({
-			display: this.FORM,
-			bold_greeting: newState.bold_greeting,
-			sub_greeting: newState.sub_greeting,
-			greeting_color: newState.greeting_color,
-			sections: newState.sections,
-			salutation: newState.salutation,
-			quick_links: newState.quick_links,
-			import: ""
-		});
+		try {
+			let newState = JSON.parse(this.state.import)
+			this.setState({
+				...newState,
+				display: this.FORM,
+				import: ""
+			});
+		} catch (e) {
+			this.setState({
+				...this.state,
+				import: ""
+			})
+		}
 	}
 
+	// Handles change of color within sections
+	// Uses currying to pass in arguments beyond the color and event itself
 	handleSectionColor = i => (c, e) => {
 		this.setState({
 			...this.state,
@@ -386,6 +399,7 @@ class EmailForm extends Component {
 		})
 	}
 
+	// Works on all changes to any object key on the top-level
 	handleTopLevelChange(e) {
 		e.preventDefault()
 		this.setState({
@@ -421,34 +435,35 @@ class EmailForm extends Component {
 		})
 	}
 
+	// Sets up an event listener to catch when the browser refreshes to preserve state
+	// Gets the saved state if it exists
 	componentDidMount() {
 		window.addEventListener('beforeunload', this.save);
 		const serializedState = localStorage.getItem("state");
-		this.setState(JSON.parse(serializedState));
+		if (serializedState) {
+			this.setState(JSON.parse(serializedState));
+		}
 	}
 
+	// Saves the state to localStorage
 	save() {
 		const serializedState = JSON.stringify(this.state)
 		localStorage.setItem("state", serializedState);
 	}
 
+	// Runs before browser refresh
 	componentWillUnmount() {
 		this.save();
 		window.removeEventListener("beforeunload", this.save);
 	}
 
+	// Resets state to default
 	reset(e) {
 		e.preventDefault();
 		const proceed = window.confirm("Are you sure you want to reset this form?");
 		if (proceed)
 			this.setState(this.defaultState);
 	}
-
-	getJSONexport(e) {
-		e.preventDefault();
-
-	}
-
 
 	render() {
 		switch (this.state.display) {
@@ -459,16 +474,26 @@ class EmailForm extends Component {
 							<br/>
 							<h1>Greetings:</h1>
 							<div className="form-group">
-								<label>Main Greeting (the one in bold LOL)</label>
-								<input className="form-control" name="bold_greeting" onChange={this.handleTopLevelChange} value={this.state.bold_greeting}/>
+								<label>Main Greeting</label>
+								<input 
+									className="form-control" 
+									name="bold_greeting" 
+									onChange={this.handleTopLevelChange} 
+									value={this.state.bold_greeting}/>
 							</div>
 							<div className="form-group">
 								<label>Intro</label>
-								<textarea className="form-control" name="sub_greeting" onChange={this.handleTopLevelChange} value={this.state.sub_greeting}/>
+								<textarea 
+									className="form-control" 
+									name="sub_greeting" 
+									onChange={this.handleTopLevelChange} 
+									value={this.state.sub_greeting}/>
 							</div>
 							<div className="form-group">
 								<label>Main Greeting Color</label>
-								<PhotoshopPicker color={this.state.greeting_color} onChangeComplete={this.handleGreetColor}/>
+								<PhotoshopPicker 
+									color={this.state.greeting_color} 
+									onChangeComplete={this.handleGreetColor}/>
 							</div>
 							<br/>
 							<h1>Sections:</h1>
@@ -481,34 +506,60 @@ class EmailForm extends Component {
 										<br/>
 										<div className="form-group">
 											<label>Title:</label>
-											<input className="form-control" type="text" name="title" onChange={this.handleSectionChange(outerIndex)} value={this.state.sections[outerIndex].title} />
+											<input 
+												className="form-control" 
+												type="text" 
+												name="title" 
+												onChange={this.handleSectionChange(outerIndex)} 
+												value={section.title} />
 										</div>
 										<div className="form-group">
 											<label>Color:</label>
-											<PhotoshopPicker color={section.color} onChangeComplete={this.handleSectionColor(outerIndex)}/>
+											<PhotoshopPicker 
+												color={section.color} 
+												onChangeComplete={this.handleSectionColor(outerIndex)}/>
 										</div>
 										<div className="form-group">
 											<label>Image URL:</label>
-											<input className="form-control" type="text" name="image_url" onChange={this.handleSectionChange(outerIndex)} value={this.state.sections[outerIndex].image_url} />
+											<input 
+												className="form-control" 
+												type="text" 
+												name="image_url" 
+												onChange={this.handleSectionChange(outerIndex)} 
+												value={section.image_url} />
 										</div>
 										<div className="form-group">
 											<label>Image size:</label>
-											<input className="form-control" type="text" name="image_size" onChange={this.handleSectionChange(outerIndex)} value={this.state.sections[outerIndex].image_size} />
+											<input 
+												className="form-control" 
+												type="text" 
+												name="image_size" 
+												onChange={this.handleSectionChange(outerIndex)} 
+												value={section.image_size} />
 										</div>
 										<br/>
 										<div className="form-group">
 											<label>Items:</label>
-											{this.state.sections[outerIndex].items.map((subSection, innerIndex) => {
+											{section.items.map((subSection, innerIndex) => {
 												if (!subSection.bulletin_exclusive) {
 													return (
 														<React.Fragment key={innerIndex}>
 															<div className="form-group">
 																<label>Title:</label>
-																<input className="form-control" type="text" name="title" onChange={this.handleSubsectionChange(outerIndex, innerIndex)} value={this.state.sections[outerIndex].items[innerIndex].title} />
+																<input 
+																	className="form-control" 
+																	type="text" 
+																	name="title" 
+																	onChange={this.handleSubsectionChange(outerIndex, innerIndex)} 
+																	value={subSection.title} />
 															</div>
 															<div className="form-group">
 																<label>Body:</label>
-																<textarea className="form-control" name="body" onChange={this.handleSubsectionChange(outerIndex, innerIndex)} value={this.state.sections[outerIndex].items[innerIndex].body} />
+																<textarea 
+																	className="form-control" 
+																	name="body" 
+																	onChange={this.handleSubsectionChange(outerIndex, innerIndex)} 
+																	value={subSection.body} />
 															</div>
 															<br/>
 														</React.Fragment>
@@ -516,8 +567,18 @@ class EmailForm extends Component {
 												}
 											})}
 										</div>
-										<button className="btn btn-success" name="addItem" onClick={this.addItem(outerIndex)}>Add Item</button>
-										<button className="btn btn-danger" name="removeItem" onClick={this.removeItem(outerIndex)}>Remove Item</button>
+										<button 
+											className="btn btn-success" 
+											name="addItem" 
+											onClick={this.addItem(outerIndex)}>
+												Add Item
+										</button>
+										<button 
+											className="btn btn-danger" 
+											name="removeItem" 
+											onClick={this.removeItem(outerIndex)}>
+												Remove Item
+										</button>
 										<br/>
 										<br/>
 										<hr className="thick"/>
@@ -526,17 +587,33 @@ class EmailForm extends Component {
 									</React.Fragment>
 								)
 							})}
-							<button className="btn btn-success" name="addSection" onClick={this.addSection}>Add Section</button>
-							<button className="btn btn-danger" name="removeSection" onClick={this.removeSection}>Remove Section</button>
+							<button 
+								className="btn btn-success" 
+								name="addSection" 
+								onClick={this.addSection}>
+									Add Section
+							</button>
+							<button 
+								className="btn btn-danger" 
+								name="removeSection" 
+								onClick={this.removeSection}>
+									Remove Section
+							</button>
 							<br/>
 							<br/>
 							<h1>Salutation:</h1>
-							<textarea className="form-control" name="salutation" value={this.state.salutation} onChange={this.handleTopLevelChange}/>
+							<textarea 
+								className="form-control" 
+								name="salutation" 
+								value={this.state.salutation} 
+								onChange={this.handleTopLevelChange}/>
 							<br/>
 							<h1>Quick Links</h1>
 							<div className="form-group">
 								<label>Quick Link Color:</label>
-								<PhotoshopPicker color={this.state.quick_links.color} onChangeComplete={this.handleQuickColor}/>
+								<PhotoshopPicker 
+									color={this.state.quick_links.color} 
+									onChangeComplete={this.handleQuickColor}/>
 							</div>
 							<h3>Links:</h3>
 							{this.state.quick_links.items.map((item, index) => {
@@ -544,35 +621,81 @@ class EmailForm extends Component {
 									<React.Fragment key={index}>
 										<div className="form-group">
 											<label>Title:</label>
-											<input className="form-control" type="text" onChange={this.handleLinkItemChange(index)} name="title" value={item.title}/>
+											<input 
+												className="form-control" 
+												type="text" 
+												onChange={this.handleLinkItemChange(index)} 
+												name="title" 
+												value={item.title}/>
 										</div>
 										<div className="form-group">
 											<label>Link:</label>
-											<input className="form-control" type="text" onChange={this.handleLinkItemChange(index)} name="link" value={item.link}/>
+											<input 
+												className="form-control" 
+												type="text" 
+												onChange={this.handleLinkItemChange(index)} 
+												name="link" 
+												value={item.link}/>
 										</div>
 										<hr className="lessThick"/>
 									</React.Fragment>
 								)
 							})}
 							<br/>
-							<button className="btn btn-success" onClick={this.addLink}>Add Link</button>
-							<button className="btn btn-danger" onClick={this.removeLink}>Remove Link</button>
+							<button 
+								className="btn btn-success" 
+								onClick={this.addLink}>
+									Add Link
+							</button>
+							<button 
+								className="btn btn-danger" 
+								onClick={this.removeLink}>
+									Remove Link
+							</button>
 							<br/>
 							<br/>
 							<br/>
-							<button className="btn btn-primary btn-lg" name="display" value={this.EMAIL} onClick={this.handleTopLevelChange}>Get email!</button>
+							<button 
+								className="btn btn-primary btn-lg" 
+								name="display" 
+								value={this.EMAIL} 
+								onClick={this.handleTopLevelChange}>
+									Get email!
+							</button>
 							<br/>
-							<button className="btn btn-success btn-lg" name="display" value={this.BULLETIN} onClick={this.handleTopLevelChange}>Get Bulletin!</button>
+							<button 
+								className="btn btn-success btn-lg" 
+								name="display" 
+								value={this.BULLETIN} 
+								onClick={this.handleTopLevelChange}>
+									Get Bulletin!
+							</button>
 							<br/>
 							<br/>
-							<button className="btn btn-dark btn-lg" name="display" value={this.JSON_EXPORT} onClick={this.handleTopLevelChange}>Get JSON export!</button>
+							<button 
+								className="btn btn-dark btn-lg" 
+								name="display" 
+								value={this.JSON_EXPORT} 
+								onClick={this.handleTopLevelChange}>
+									Get JSON export!
+							</button>
 							<br/>
-							<button className="btn btn-light btn-lg" name="display" value={this.JSON_IMPORT} onClick={this.handleTopLevelChange}>Import JSON!</button>
+							<button 
+								className="btn btn-light btn-lg" 
+								name="display" 
+								value={this.JSON_IMPORT} 
+								onClick={this.handleTopLevelChange}>
+									Import JSON!
+							</button>
 							<br/>
 							<br/>
 							<br/>
 							<br/>
-							<button className="btn btn-danger btn-lg" onClick={this.reset}>Reset Form</button>
+							<button 
+								className="btn btn-danger btn-lg" 
+								onClick={this.reset}>
+									Reset Form
+							</button>
 							<br/>
 							<br/>
 						</form>
@@ -582,7 +705,8 @@ class EmailForm extends Component {
 				return (
 					<React.Fragment>
 						<div className="theHTML">
-							<style dangerouslySetInnerHTML={{__html: `p span span {font-weight: 650; color: ${this.state.greeting_color}}`}}/>
+							<style 
+								dangerouslySetInnerHTML={{__html: `p span span {font-weight: 650; color: ${this.state.greeting_color}}`}}/>
 							<p style={this.setFont({big: true, bold: true, color: this.state.greeting_color, centered: true})}>
 								{this.state.bold_greeting}
 							</p>
@@ -604,9 +728,13 @@ class EmailForm extends Component {
 												return (
 													<React.Fragment>
 														<p style={this.setFont()}>
-															<span dangerouslySetInnerHTML={{__html: `${item.title}:`}} style={this.setFont({bold: true, color: section.color})}></span>
+															<span 
+																dangerouslySetInnerHTML={{__html: `${item.title}:`}} 
+																style={this.setFont({bold: true, color: section.color})}>
+															</span>
 															&nbsp;&nbsp;
-															<span dangerouslySetInnerHTML={{__html: item.body}}></span>
+															<span dangerouslySetInnerHTML={{__html: item.body}}>
+															</span>
 														</p>
 													</React.Fragment>
 												)
@@ -616,21 +744,37 @@ class EmailForm extends Component {
 								)
 							})}
 							<br/>
-							<p style={this.setFont()} dangerouslySetInnerHTML={{__html: this.state.salutation}}></p>
+							<p 
+								style={this.setFont()} 
+								dangerouslySetInnerHTML={{__html: this.state.salutation}}>
+							</p>
 							<br/>
 							<p style={this.setFont({bold: true, big: true, centered: true, color: this.state.quick_links.color})}>Quick Links</p>
 							{this.state.quick_links.items.map(item => {
 								return (
 									<p style={this.setFont()}>
-										<span style={this.setFont({bold: true, color: this.state.quick_links.color})} dangerouslySetInnerHTML={{__html: `${item.title}:`}}></span>
+										<span 
+											style={this.setFont({bold: true, color: this.state.quick_links.color})} 
+											dangerouslySetInnerHTML={{__html: `${item.title}:`}}>
+										</span>
 										&nbsp;&nbsp;
-										<a href={item.link}>{item.link}</a>
+										<a 
+											href={item.link} 
+											target="_blank">
+												{item.link}
+										</a>
 									</p>
 								)
 							})}
 						</div>
 						<br/>
-						<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
+						<button 
+							name="display" 
+							className="btn btn-primary btn-lg" 
+							value={this.FORM} 
+							onClick={this.handleTopLevelChange}>
+								Go back to form!
+						</button>
 						<br/>
 						<br/>
 					</React.Fragment>
@@ -641,8 +785,7 @@ class EmailForm extends Component {
 					<React.Fragment>
 						<div className="theHTML">
 							<style dangerouslySetInnerHTML={{__html: "p span span {font-weight: 650}"}}/>
-							{
-							this.state.sections.map(section => {
+							{this.state.sections.map(section => {
 								if (bulletinSet.has(section.title.toLowerCase())) {
 									return (
 										<React.Fragment>
@@ -652,49 +795,68 @@ class EmailForm extends Component {
 											{section.items.map(item => {
 												return (
 													<p style={this.setFont()}>
-														<span style={this.setFont({bold: true})} dangerouslySetInnerHTML={{__html: item.title}}></span>
+														<span 
+															style={this.setFont({bold: true})} 
+															dangerouslySetInnerHTML={{__html: item.title}}>
+														</span>
 														:&nbsp;&nbsp;
-														<span dangerouslySetInnerHTML={{__html: item.body}}></span>
+														<span dangerouslySetInnerHTML={{__html: item.body}}>
+														</span>
 													</p>
 												)
 											})}
 										</React.Fragment>
 									)
 								}
-								return null;
 							})}
 						</div>
 						<br/>
 						<br/>
 						<div className="container">
 							<form>
-								{
-								[...bulletinSet].map(element => {
+								{[...bulletinSet].map(element => {
 									const section = this.state.sections.filter(section => section.title.toLowerCase() === element)[0]
 									if (section) {
 										return (
 											<React.Fragment>
 												<h3>{section.title}</h3>
 												<br/>
-												{
-												section.items.map((item, i) => {
+												{section.items.map((item, i) => {
 													if (item.bulletin_exclusive) {
 														return (
 															<React.Fragment>
 																<div className="form-group">
 																	<label>Title</label>
-																	<input className="form-control" name="title" onChange={this.bulletinChange(section.title, i)} value={item.title}/>
+																	<input 
+																		className="form-control" 
+																		name="title" 
+																		onChange={this.bulletinChange(section.title, i)} 
+																		value={item.title}/>
 																</div>
 																<div className="form-group">
 																	<label>Body</label>
-																	<textarea className="form-control" name="body" onChange={this.bulletinChange(section.title, i)} value={item.body}/>
+																	<textarea 
+																		className="form-control" 
+																		name="body" 
+																		onChange={this.bulletinChange(section.title, i)} 
+																		value={item.body}/>
 																</div>
 															</React.Fragment>
 														)
 													}
 												})}
-												<button className="btn btn-success" value="add" onClick={this.bulletinHandle(element)}>Add {element}</button>
-												<button className="btn btn-danger" value="remove" onClick={this.bulletinHandle(element)}>Remove {element}</button>
+												<button 
+													className="btn btn-success" 
+													value="add"
+													onClick={this.bulletinHandle(element)}>
+														Add {element}
+												</button>
+												<button 
+													className="btn btn-danger" 
+													value="remove" 
+													onClick={this.bulletinHandle(element)}>
+														Remove {element}
+												</button>
 												<br/>
 												<br/>
 												<br/>
@@ -708,37 +870,71 @@ class EmailForm extends Component {
 						<br/>
 						<br/>
 						<br/>
-						<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
+						<button 
+							name="display" 
+							className="btn btn-primary btn-lg" 
+							value={this.FORM} 
+							onClick={this.handleTopLevelChange}>
+								Go back to form!
+						</button>
 					</React.Fragment>
 				)
 			case this.JSON_EXPORT:
 				return (
 					<React.Fragment>
-					<span>{JSON.stringify({...this.state, display: this.JSON_IMPORT})}</span>
-					<br/>
-					<br/>
-					<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
+						<span>{JSON.stringify({...this.state, display: this.JSON_IMPORT})}</span>
+						<br/>
+						<br/>
+						<button 
+							name="display" 
+							className="btn btn-primary btn-lg" 
+							value={this.FORM} 
+							onClick={this.handleTopLevelChange}>
+								Go back to form!
+						</button>
 					</React.Fragment>
 				)
 			case this.JSON_IMPORT:
 				return (
 					<React.Fragment>
-					<form>
-						<textarea rows="20" className="form-control" name="import" value={this.state.import} onChange={this.handleTopLevelChange}/>
+						<form>
+							<textarea 
+								rows="20" 
+								className="form-control" 
+								name="import" 
+								value={this.state.import} 
+								onChange={this.handleTopLevelChange}/>
+							<br/>
+							<button 
+								className="btn btn-primary" 
+								name="importJSON" 
+								onClick={this.handleImport}>
+									Import!
+							</button>
+						</form>
 						<br/>
-						<button className="btn btn-primary" name="importJSON" onClick={this.handleImport}>Import!</button>
-					</form>
-					<br/>
-					<br/>
-					<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
+						<br/>
+						<button 
+							name="display" 
+							className="btn btn-primary btn-lg" 
+							value={this.FORM} 
+							onClick={this.handleTopLevelChange}>
+								Go back to form!
+						</button>
 					</React.Fragment>
 				)
 			default:
 				return (
 					<React.Fragment>
-					<h2>Something went wrong...</h2>
-					<br/>
-					<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
+						<h2>Something went wrong...</h2>
+						<br/>
+						<button 
+							name="display" 
+							className="btn btn-primary btn-lg" 
+							value={this.FORM}
+							onClick={this.handleTopLevelChange}>
+								Go back to form!
+						</button>
 					</React.Fragment>
 				)
 		}
