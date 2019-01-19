@@ -2,6 +2,10 @@ h1, h2 {
   text-align: center;
 }
 
+textarea {
+  rows: 4;
+}
+
 .center {
   text-align: center;
 }

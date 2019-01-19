@@ -24,6 +24,7 @@ class EmailForm extends Component {
 		this.handleQuickColor = this.handleQuickColor.bind(this);
 		this.bulletinHandle = this.bulletinHandle.bind(this);
 		this.bulletinChange = this.bulletinChange.bind(this);
+		this.handleImport = this.handleImport.bind(this);
 
 		this.defaultState = this.state = {
 			display: "form",
@@ -47,7 +48,7 @@ class EmailForm extends Component {
 				{
 					title: "Upcoming Events",
 					image_url: "",
-					color: "#38761d",
+					color: "#00F6ED",
 					image_size: 200,
 					items: [
 						{
@@ -73,7 +74,7 @@ class EmailForm extends Component {
 			],
 			salutation: "Love,<br/>Luke <3",
 			quick_links: {
-				color: "#29FFFA",
+				color: "#FF0003",
 				items: [
 					{
 						title: "Catholic Google Calendar",
@@ -96,8 +97,8 @@ class EmailForm extends Component {
 						link: "https://goo.gl/forms/hw7O5ouKTbhSYDtH3"
 					}
 				]
-			}
-			
+			},
+			import: ""
 		}
 	}
 
@@ -113,11 +114,13 @@ class EmailForm extends Component {
 	FORM = "form"
 	EMAIL = "email"
 	BULLETIN = "bulletin"
+	JSON_EXPORT = "JSON_export"
+	JSON_IMPORT = "JSON_import"
 
 	setFont({bold = false, big = false, centered = false, color = "#000000"} = {}) {
 		return {
 			fontWeight: bold ? 650 : 400,
-			fontSize: big ? "22pt" : "12pt",
+			fontSize: big ? "20pt" : "11pt",
 			color: `${color}`,
 			textAlign: centered ? "center" : "left"
 		}
@@ -151,9 +154,22 @@ class EmailForm extends Component {
 		});
 	}
 
+	handleImport(e) {
+		e.preventDefault();
+		let newState = JSON.parse(this.state.import)
+		this.setState({
+			display: this.FORM,
+			bold_greeting: newState.bold_greeting,
+			sub_greeting: newState.sub_greeting,
+			greeting_color: newState.greeting_color,
+			sections: newState.sections,
+			salutation: newState.salutation,
+			quick_links: newState.quick_links,
+			import: ""
+		});
+	}
+
 	handleSectionColor = i => (c, e) => {
-		console.log(i);
-		console.log(c, e);
 		this.setState({
 			...this.state,
 			sections: 
@@ -290,7 +306,7 @@ class EmailForm extends Component {
 
 	removeItem = i => e => {
 		e.preventDefault();
-		if (this.state.sections[i].items.length > 1) {
+		if (this.state.sections[i].items.length > 0) {
 			this.setState({
 				...this.state,
 				sections: 
@@ -428,6 +444,11 @@ class EmailForm extends Component {
 			this.setState(this.defaultState);
 	}
 
+	getJSONexport(e) {
+		e.preventDefault();
+
+	}
+
 
 	render() {
 		switch (this.state.display) {
@@ -541,8 +562,12 @@ class EmailForm extends Component {
 							<br/>
 							<button className="btn btn-primary btn-lg" name="display" value={this.EMAIL} onClick={this.handleTopLevelChange}>Get email!</button>
 							<br/>
-							<br/>
 							<button className="btn btn-success btn-lg" name="display" value={this.BULLETIN} onClick={this.handleTopLevelChange}>Get Bulletin!</button>
+							<br/>
+							<br/>
+							<button className="btn btn-dark btn-lg" name="display" value={this.JSON_EXPORT} onClick={this.handleTopLevelChange}>Get JSON export!</button>
+							<br/>
+							<button className="btn btn-light btn-lg" name="display" value={this.JSON_IMPORT} onClick={this.handleTopLevelChange}>Import JSON!</button>
 							<br/>
 							<br/>
 							<br/>
@@ -614,28 +639,31 @@ class EmailForm extends Component {
 				const bulletinSet = new Set(["announcements", "upcoming events"])
 				return (
 					<React.Fragment>
-						<style dangerouslySetInnerHTML={{__html: "p span span {font-weight: 650}"}}/>
-						{
-						this.state.sections.map(section => {
-							if (bulletinSet.has(section.title.toLowerCase())) {
-								return (
-									<React.Fragment>
-										<p style={this.setFont({bold: true, big: true})}>
-											{section.title}:
-										</p>
-										{section.items.map(item => {
-											return (
-												<p style={this.setFont()}>
-													<span style={this.setFont({bold: true})} dangerouslySetInnerHTML={{__html: item.title}}></span>
-													:&nbsp;&nbsp;
-													<span dangerouslySetInnerHTML={{__html: item.body}}></span>
-												</p>
-											)
-										})}
-									</React.Fragment>
-								)
-							}
-						})}
+						<div className="theHTML">
+							<style dangerouslySetInnerHTML={{__html: "p span span {font-weight: 650}"}}/>
+							{
+							this.state.sections.map(section => {
+								if (bulletinSet.has(section.title.toLowerCase())) {
+									return (
+										<React.Fragment>
+											<p style={this.setFont({bold: true, big: true})}>
+												{section.title}:
+											</p>
+											{section.items.map(item => {
+												return (
+													<p style={this.setFont()}>
+														<span style={this.setFont({bold: true})} dangerouslySetInnerHTML={{__html: item.title}}></span>
+														:&nbsp;&nbsp;
+														<span dangerouslySetInnerHTML={{__html: item.body}}></span>
+													</p>
+												)
+											})}
+										</React.Fragment>
+									)
+								}
+								return null;
+							})}
+						</div>
 						<br/>
 						<br/>
 						<div className="container">
@@ -659,7 +687,7 @@ class EmailForm extends Component {
 																</div>
 																<div className="form-group">
 																	<label>Body</label>
-																	<input className="form-control" name="body" onChange={this.bulletinChange(section.title, i)} value={item.body}/>
+																	<textarea className="form-control" name="body" onChange={this.bulletinChange(section.title, i)} value={item.body}/>
 																</div>
 															</React.Fragment>
 														)
@@ -683,9 +711,35 @@ class EmailForm extends Component {
 						<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
 					</React.Fragment>
 				)
+			case this.JSON_EXPORT:
+				return (
+					<React.Fragment>
+					<span>{JSON.stringify({...this.state, display: this.JSON_IMPORT})}</span>
+					<br/>
+					<br/>
+					<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
+					</React.Fragment>
+				)
+			case this.JSON_IMPORT:
+				return (
+					<React.Fragment>
+					<form>
+						<textarea rows="20" className="form-control" name="import" value={this.state.import} onChange={this.handleTopLevelChange}/>
+						<br/>
+						<button className="btn btn-primary" name="importJSON" onClick={this.handleImport}>Import!</button>
+					</form>
+					<br/>
+					<br/>
+					<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
+					</React.Fragment>
+				)
 			default:
 				return (
+					<React.Fragment>
 					<h2>Something went wrong...</h2>
+					<br/>
+					<button name="display" className="btn btn-primary btn-lg" value={this.FORM} onClick={this.handleTopLevelChange}>Go back to form!</button>
+					</React.Fragment>
 				)
 		}
 	}
