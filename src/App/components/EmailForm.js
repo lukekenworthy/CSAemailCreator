@@ -1,38 +1,44 @@
 import React, { Component } from 'react';
 import { PhotoshopPicker } from "react-color";
 
+const removeLastIf = (array, condition) => {
+	let spot = -1;
+	array.forEach((e, i) => {
+		if (condition(e)) {
+			spot = i;
+		}
+	})
+	if (spot !== -1) {
+		return [...array.slice(0, spot), ...array.slice(spot + 1)]
+	}
+	return array
+}
+
 class EmailForm extends Component {
 	constructor(props) {
 		super(props);
 
 		// Bind functions
-		this.handleSectionChange = this.handleSectionChange.bind(this);
-		this.addSection = this.addSection.bind(this);
-		this.removeSection = this.removeSection.bind(this);
-		this.addItem = this.addItem.bind(this);
-		this.removeItem = this.removeItem.bind(this);
-		this.handleTopLevelChange = this.handleTopLevelChange.bind(this);
-		this.handleQuickLinkChange = this.handleQuickLinkChange.bind(this);
-		this.handleLinkItemChange = this.handleLinkItemChange.bind(this);
-		this.addLink = this.addLink.bind(this);
-		this.removeLink = this.removeLink.bind(this);
-		this.setFont = this.setFont.bind(this);
-		this.centerImage = this.centerImage.bind(this);
-		this.save = this.save.bind(this);
-		this.reset = this.reset.bind(this);
-		this.handleGreetColor = this.handleGreetColor.bind(this);
-		this.handleSectionColor = this.handleSectionColor.bind(this);
-		this.handleQuickColor = this.handleQuickColor.bind(this);
-		this.bulletinHandle = this.bulletinHandle.bind(this);
-		this.bulletinChange = this.bulletinChange.bind(this);
-		this.handleImport = this.handleImport.bind(this);
-
-		// Views for the form
-		this.FORM = "form"
-		this.EMAIL = "email"
-		this.BULLETIN = "bulletin"
-		this.JSON_EXPORT = "JSON_export"
-		this.JSON_IMPORT = "JSON_import"
+		// this.handleSectionChange = this.handleSectionChange.bind(this);
+		// this.addSection = this.addSection.bind(this);
+		// this.removeSection = this.removeSection.bind(this);
+		// this.addItem = this.addItem.bind(this);
+		// this.removeItem = this.removeItem.bind(this);
+		// this.handleTopLevelChange = this.handleTopLevelChange.bind(this);
+		// this.handleQuickLinkChange = this.handleQuickLinkChange.bind(this);
+		// this.handleLinkItemChange = this.handleLinkItemChange.bind(this);
+		// this.addLink = this.addLink.bind(this);
+		// this.removeLink = this.removeLink.bind(this);
+		// this.setFont = this.setFont.bind(this);
+		// this.centerImage = this.centerImage.bind(this);
+		// this.save = this.save.bind(this);
+		// this.reset = this.reset.bind(this);
+		// this.handleGreetColor = this.handleGreetColor.bind(this);
+		// this.handleSectionColor = this.handleSectionColor.bind(this);
+		// this.handleQuickColor = this.handleQuickColor.bind(this);
+		// this.bulletinHandle = this.bulletinHandle.bind(this);
+		// this.bulletinChange = this.bulletinChange.bind(this);
+		// this.handleImport = this.handleImport.bind(this);
 
 		// Set default state
 		this.defaultState = this.state = {
@@ -111,8 +117,15 @@ class EmailForm extends Component {
 		}
 	}
 
+	// Views for the form
+	FORM = "form"
+	EMAIL = "email"
+	BULLETIN = "bulletin"
+	JSON_EXPORT = "JSON_export"
+	JSON_IMPORT = "JSON_import"
+
 	// Used for styling images
-	centerImage({width = 200} = {}) {
+	centerImage = ({width = 200} = {}) => {
 		return {
 			display: "block",
 			marginLeft: "auto",
@@ -122,7 +135,7 @@ class EmailForm extends Component {
 	}
 
 	// Used for styling text
-	setFont({bold = false, big = false, centered = false, color = "#000000"} = {}) {
+	setFont = ({bold = false, big = false, centered = false, color = "#000000"} = {}) => {
 		return {
 			fontWeight: bold ? 650 : 400,
 			fontSize: big ? "20pt" : "11pt",
@@ -132,7 +145,7 @@ class EmailForm extends Component {
 	}
 
 	// Handles color for quick_links section
-	handleQuickColor(c, e) {
+	handleQuickColor = (c, e) => {
 		this.setState({
 			...this.state,
 			quick_links: {
@@ -143,7 +156,7 @@ class EmailForm extends Component {
 	}
 
 	// Handles top-level color for greeting
-	handleGreetColor(c, e) {
+	handleGreetColor = (c, e) => {
 		this.setState({
 			...this.state,
 			greeting_color: c.hex
@@ -151,7 +164,7 @@ class EmailForm extends Component {
 	}
 
 	// Used to update any change in the quick_links part of state
-	handleQuickLinkChange(e) {
+	handleQuickLinkChange = e => {
 		e.preventDefault();
 		this.setState({
 			...this.state,
@@ -163,7 +176,7 @@ class EmailForm extends Component {
 	}
 
 	// Imports new state
-	handleImport(e) {
+	handleImport = e => {
 		e.preventDefault();
 		try {
 			let newState = JSON.parse(this.state.import)
@@ -173,10 +186,15 @@ class EmailForm extends Component {
 				import: ""
 			});
 		} catch (e) {
-			this.setState({
-				...this.state,
-				import: ""
-			})
+			if (e instanceof SyntaxError) {
+				this.setState({
+					...this.state,
+					import: ""
+				})
+				alert("Invalid import expression!");
+			} else {
+				throw e;
+			}
 		}
 	}
 
@@ -198,7 +216,7 @@ class EmailForm extends Component {
 		})
 	}
 
-	addSection(e) {
+	addSection = e => {
 		e.preventDefault();
 		this.setState({
 			...this.state,
@@ -217,7 +235,7 @@ class EmailForm extends Component {
 		});
 	}
 
-	removeSection(e) {
+	removeSection = e => {
 		e.preventDefault();
 		if (this.state.sections.length > 0) {
 			this.setState({
@@ -281,7 +299,7 @@ class EmailForm extends Component {
 								if (section.title.toLowerCase() === location) {
 									return {
 										...section,
-										items: section.items.slice(0, -1)
+										items: removeLastIf(section.items, e => e.bulletin_exclusive)
 									}
 								}
 								return section;
@@ -327,7 +345,7 @@ class EmailForm extends Component {
 						if (i === index) {
 							return {
 								...section,
-								items: this.state.sections[index].items.slice(0, -1)
+								items: removeLastIf(section.items, e => ! e.bulletin_exclusive)
 							}
 						}
 						return section;
@@ -336,7 +354,7 @@ class EmailForm extends Component {
 		}
 	}
 
-	addLink(e) {
+	addLink = e => {
 		e.preventDefault();
 		this.setState({
 			...this.state,
@@ -350,7 +368,7 @@ class EmailForm extends Component {
 		})
 	}
 
-	removeLink(e) {
+	removeLink = e => {
 		e.preventDefault();
 		if (this.state.quick_links.items.length > 1) {
 			this.setState({
@@ -400,7 +418,7 @@ class EmailForm extends Component {
 	}
 
 	// Works on all changes to any object key on the top-level
-	handleTopLevelChange(e) {
+	handleTopLevelChange = e => {
 		e.preventDefault()
 		this.setState({
 			...this.state,
@@ -437,7 +455,7 @@ class EmailForm extends Component {
 
 	// Sets up an event listener to catch when the browser refreshes to preserve state
 	// Gets the saved state if it exists
-	componentDidMount() {
+	componentDidMount = () => {
 		window.addEventListener('beforeunload', this.save);
 		const serializedState = localStorage.getItem("state");
 		if (serializedState) {
@@ -446,26 +464,27 @@ class EmailForm extends Component {
 	}
 
 	// Saves the state to localStorage
-	save() {
+	save = () => {
 		const serializedState = JSON.stringify(this.state)
 		localStorage.setItem("state", serializedState);
 	}
 
 	// Runs before browser refresh
-	componentWillUnmount() {
+	componentWillUnmount = () => {
 		this.save();
 		window.removeEventListener("beforeunload", this.save);
 	}
 
 	// Resets state to default
-	reset(e) {
+	reset = e => {
 		e.preventDefault();
 		const proceed = window.confirm("Are you sure you want to reset this form?");
-		if (proceed)
+		if (proceed) {
 			this.setState(this.defaultState);
+		}
 	}
 
-	render() {
+	render = () => {
 		switch (this.state.display) {
 			case this.FORM:
 				return (
@@ -792,7 +811,7 @@ class EmailForm extends Component {
 											<p style={this.setFont({bold: true, big: true})}>
 												{section.title}:
 											</p>
-											{section.items.map(item => {
+											{section.items.sort((a, b) => (+ a.bulletin_exclusive) - (+ b.bulletin_exclusive)).map(item => {
 												return (
 													<p style={this.setFont()}>
 														<span 
